@@ -1,0 +1,50 @@
+docker build -t test:python ./
+
+docker run -it test:python
+
+docker network create pg-network
+
+docker run -it \
+    -e POSTGRES_USER="root" \
+    -e POSTGRES_PASSWORD="root" \
+    -e POSTGRES_DB="ny_taxi" \
+    -v $(pwd)/ny_taxi_data:/var/lib/postgresql/data \
+    -p 9000:5432 \
+    --network pg-network \
+    --name pg-db \
+    postgres:13
+
+docker run -it \
+    -e PGADMIN_DEFAULT_EMAIL="admin@admin.com" \
+    -e PGADMIN_DEFAULT_PASSWORD="root" \
+    -p 9001:80 \
+    --network pg-network \
+    --name pgadmin \
+    dpage/pgadmin4
+
+python3 ingest_data.py \
+    --user=root \
+    --password=root \
+    --host=localhost \
+    --port=9000 \
+    --db=ny_taxi \
+    --table_name=ny_taxi_trips \
+    --data_source_url=https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2022-01.parquet
+
+docker run -it \
+    --network pg-network \
+    --name ingestion_script \
+    ingestion_script:0.001 \
+        --user=root \
+        --password=root \
+        --host=pg-db \
+        --port=5432 \
+        --db=ny_taxi \
+        --data_source_url https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2022-01.parquet \
+        https://d37ci6vzurychx.cloudfront.net/misc/taxi+_zone_lookup.csv
+
+docker-compose up
+docker-compose down
+
+# -d is for detached mode, meaning you get the terminal back and can do other stuff
+docker-compose up -d
