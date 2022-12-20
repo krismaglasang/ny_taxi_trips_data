@@ -1,3 +1,5 @@
+######################################## Docker ########################################
+
 docker build -t test:python ./
 
 docker run -it test:python
@@ -48,3 +50,15 @@ docker-compose down
 
 # -d is for detached mode, meaning you get the terminal back and can do other stuff
 docker-compose up -d
+
+
+
+######################################## Terraform / GCP ########################################
+
+export GOOGLE_APPLICATION_CREDENTIALS=/Users/kristianmaglasang/Documents/projects/data_engineering/de-zoomcamp-372106-3e4d7d044e82.json
+gcloud auth application-default login
+
+terraform init
+terraform plan
+terraform apply
+terraform destroy
