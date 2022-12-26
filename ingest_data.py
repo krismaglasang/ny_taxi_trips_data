@@ -1,7 +1,7 @@
 
 import pandas as pd
 import argparse
-import os
+import requests
 from sqlalchemy import create_engine
 from time import time
 from pathlib import Path
@@ -10,15 +10,18 @@ from pathlib import Path
 def get_data_in_csv(url):
     table_name = Path(url).stem
     data_source_extension = Path(url).suffix
-    imported_data = f"{table_name}.csv"
+    data_parquet = f'{table_name}.parquet'
+    data_csv = f"{table_name}.csv"
 
     if data_source_extension == ".parquet":
-        os.system(f'wget {url} -O {table_name}.parquet')
-        pd.read_parquet(f'{table_name}.parquet').to_csv(imported_data)
+        r = requests.get(url, allow_redirects=True)
+        open(data_parquet, 'wb').write(r.content)
+        pd.read_parquet(data_parquet).to_csv(data_csv)
     else:
-        os.system(f'wget {url} -O {imported_data}')
+        r = requests.get(url, allow_redirects=True)
+        open(data_csv, 'wb').write(r.content)
     
-    return table_name, imported_data
+    return table_name, data_csv
 
 def main(args):
     user = args.user
@@ -26,12 +29,12 @@ def main(args):
     host = args.host
     port = args.port
     db = args.db
-    data_source_url = args.data_source_url
-    
-    for url in data_source_url:
-        table_name, imported_data = get_data_in_csv(url)
+    data_source_url = str(args.data_source_url).split(',')
 
-        df = pd.read_csv(imported_data)
+    for url in data_source_url:
+        table_name, data_csv = get_data_in_csv(url)
+
+        df = pd.read_csv(data_csv)
 
         engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{db}')
         engine.connect()
@@ -50,7 +53,7 @@ def main(args):
         df.head(n=0).to_sql(name=table_name, con=engine, if_exists='replace')
 
         # Upload data 100k at a time
-        df_iter = pd.read_csv(imported_data, iterator=True, chunksize=100000)
+        df_iter = pd.read_csv(data_csv, iterator=True, chunksize=100000)
 
         while True:
             t_start = time()
@@ -83,12 +86,8 @@ if __name__ == '__main__':
     parser.add_argument('--port')
     parser.add_argument('--db')
     parser.add_argument('--table_name')
-    parser.add_argument('--data_source_url', nargs='+')
+    parser.add_argument('--data_source_url')
 
     args = parser.parse_args()
 
     main(args)
-
-
-
-
