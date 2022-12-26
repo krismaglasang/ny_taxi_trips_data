@@ -1,14 +1,16 @@
 services:
+
   pgdatabase:
     image: postgres:13
     environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=root
-      - POSTGRES_DB=ny_taxi
+      - POSTGRES_USER=${USERNAME}
+      - POSTGRES_PASSWORD=${PASSWORD}
+      - POSTGRES_DB=${DB}
     volumes:
       - ./ny_taxi_data:/var/lib/postgresql/data:rw
     ports:
-      - 9000:5432
+      - ${PG_PORT}:5432
+    hostname: ${HOST}
 
   pgadmin:
     image: dpage/pgadmin4
@@ -16,6 +18,10 @@ services:
       - PGADMIN_DEFAULT_EMAIL=admin@admin.com
       - PGADMIN_DEFAULT_PASSWORD=root
     ports:
-      - 9001:80
-    
-    
+      - 80:80
+
+  ingestion_script:
+    build:
+      context: ./
+    env_file:
+      - .env
