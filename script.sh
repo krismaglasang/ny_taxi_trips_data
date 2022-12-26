@@ -1,4 +1,3 @@
 #! /bin/sh
 
-docker build -t ingestion_script:0.01 ./
-docker compose up -d
+python ingest_data.py --user=$USERNAME --password=$PASSWORD --host=$HOST --port=$PG_PORT --db=$DB --data_source_url=$DATA_SOURCE_URL
