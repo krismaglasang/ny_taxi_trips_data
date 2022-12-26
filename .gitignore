@@ -2,6 +2,9 @@ ny_taxi_data
 .ipynb_checkpoints
 .vscode
 
+.bashrc
+.bashrc.*
+
 terraform/.terraform
 terraform/.terraform.lock.hcl
 terraform/terraform.tfstate
